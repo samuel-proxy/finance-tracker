@@ -1,24 +1,26 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Pressable } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Pressable } from "react-native";
 import { useState } from "react";
+import TransactionItem from "@/components/TransactionItem";
 
 type Transaction = {
   id: string;
   title: string;
   amount: number;
-  category: string;
+  type: "expense" | "income"
 }
 const CATEGORIES = ["Income", "Food", "Transport", "Bills", "Other"];
 export default function Home(){
 const [category, setCategory] = useState("Food");
 const [title, setTitle] = useState("");
 const [amount, setAmount] = useState("");
+const [type, setType] = useState<"expense" | "income">("expense");
 const [transactions, setTransactions] = useState<Transaction[]>([
-    {id: "1", title: "Salary", amount: 15000, category: "Income"},
-    {id: "2", title: "Rent", amount: -8000, category: "Bills"},
-    {id: "3", title: "Groceries", amount: -1200, category: "Food"},
-    {id: "4", title: "Freelance Gig", amount: 3500, category: "Income"},
-    {id: "5", title: "Bonus Tip", amount: 200, category: "Income"},
-    {id: "6", title: "Transport", amount: -15, category: "Transport"},
+    {id: "1", title: "Salary", amount: 15000, type: "income"},
+    {id: "2", title: "Rent", amount: -8000, type: "expense"},
+    {id: "3", title: "Groceries", amount: -1200, type: "expense"},
+    {id: "4", title: "Freelance Gig", amount: 3500, type: "income"},
+    {id: "5", title: "Bonus Tip", amount: 200, type: "income"},
+    {id: "6", title: "Transport", amount: -15,  type: "expense"},
 ]);
 const[count, setCount] = useState(0);
 const[sortAsc, setSortAsc] = useState<boolean | null>(null);
@@ -38,7 +40,7 @@ function addTransaction(){
     id: Date.now().toString(),
     title: title,
     amount: finalAmount,
-    category: category
+    type: type
   };
 
   setTransactions([newTransaction, ...transactions]);
@@ -61,7 +63,7 @@ const displayedTransactions = [...transactions].sort((a,b) => {
   return sortAsc ? a.amount - b.amount : b.amount - a.amount;
 });
 const total = transactions.reduce((sum, item)=> sum + item.amount, 0);
-
+ 
 
   return(
     <View style={styles.container}>
@@ -86,52 +88,34 @@ const total = transactions.reduce((sum, item)=> sum + item.amount, 0);
           onChangeText={setAmount}
         />
       </View>
-      <View style = {styles.chipRow}>
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            onPress={() => setCategory(cat)}
-            style={[
-              styles.chip, category === cat && styles.chipActive
-            ]}
-          >
-            <Text style = {styles.chipText}>{cat}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <TouchableOpacity onPress={addTransaction} style={styles.button}>
-          <Text style={styles.buttonText}>Add</Text>
-        </TouchableOpacity>
+          <Button
+            title = "Add"
+            onPress= {addTransaction}
+          />
+          <Button
+            title="Expense"
+            onPress={()=> setType("expense")}
+          />
+          <Button
+            title="Income"
+            onPress={()=> setType("income")}
+          />
         <TouchableOpacity onPress={toggleSort}>
           <Text style={styles.text}>{sortAsc === null ? "Sort": sortAsc ? "Sorted Low -> High": "Sorted High -> Low"}</Text>
         </TouchableOpacity>
       <FlatList
-          data={displayedTransactions}
+          data={transactions}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.row} onPress={() => deleteTransaction(item.id)}>
-              <Text style={styles.rowText}>{item.title}</Text>
-              <Text style = {styles.text}>{item.category}</Text>
-              <Text style={[
-                styles.rowAmount,
-                {color: item.amount < 0 ? "#ff6b6b" : "#4ade80"}
-                ]}> 
-                {item.amount > 0 ? "+" : ""}
-                {item.amount.toLocaleString()}
-              </Text>
-            </TouchableOpacity>
+              <TransactionItem
+                title = {item.title}
+                amount = {item.amount}
+                type= {item.type}
+              />
           )}
       />
-      <View style={styles.container}>
-      <Text style={styles.text}>{count}</Text>
-          <Pressable 
-              style={styles.button}
-              onPress={()=> setCount(count+1)}>
-            <Text style={styles.text}>
-              ADD
-            </Text>
-          </Pressable>
-      </View>
+      
+      
     </View>
   )
 }
@@ -139,7 +123,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a2e',
-    paddingTop: 20,
+    paddingTop: 80,
     paddingHorizontal: 60,
 
   },
